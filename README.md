@@ -1,5 +1,4 @@
-
-Emlakjet Data Science - Case Study
+Case Study
 Bir online iş bulma platformu için ilan öneri sistemi kurulacaktır. Bu sistem için 2 ana
 veriseti kullanılacaktır:
 a) Kullanıcı Hareket Verileri: Veriye buradan ulaşabilirsiniz. Bu veride kullanıcıların
