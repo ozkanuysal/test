@@ -1,43 +1,81 @@
+MLOps Engineer
 Case Study
-Bir online iş bulma platformu için ilan öneri sistemi kurulacaktır. Bu sistem için 2 ana
-veriseti kullanılacaktır:
-a) Kullanıcı Hareket Verileri: Veriye buradan ulaşabilirsiniz. Bu veride kullanıcıların
-sitede tıkladığı ve başvurduğu ilanların logları yer alıyor. Veri önizlemesi (Fig 1) ve
-kolon açıklamaları aşağıdaki gibidir.
-b) İlan Verileri: Veriye buradan ulaşabilirsiniz. Bu veride ilanların id ’si (item_id),
-başlık (pozisyon_adi) ve açıklama ( item_id_aciklama ) bilgilerini bulabilirsiniz.
-Fig 1. Kullanıcı Veriseti Önizlemesi
-event_type: Kullanıcı hareketinin tipini belirtir. click tıklama, purchase başvurma anlamına gelir.
-client _id: Anonimleştirilmiş kullanıcı id’si
-item_id : İlan id'si
-ds_search_id : Kullanıcının site içinde yaptığı arama id’si. Bu arama sonrasında o satırdaki ilanı
-görmüş anlamına gelir.
-timestamp : İlana başvurulma zamanı
------------ ------------ ------------ ------------ ------------ ------------ ------------ ------------ -----------
-Kurulacak öneri sistemi için beklenen adımlar aşağıdaki gibidir:
-Part 1 - Graph Kurulumu ve Analizi
-a) Kullanıcı verilerinden yola çıkarak bir Graph kurmanızı istiyoruz. Kurduğunuz graph’ta
-kenar bağlantılarını nasıl oluşturuduğunuzu sebepleriyle birlikte açıklayınız.
-b) Kurduğunuz graph ı analiz etmenizi ve yorumlamanızı istiyoruz.
-
-Part 2 - Kullanıcı Verisi ile İlan Vektörü Üretme
-a) Part 1’de kurduğunuz g raph’ı kullanarak her bir ilan için ilan vektörleri oluşturulmalı.
-Bunun için için uygun bulduğunuz bir node embedding metodunu kullanabilirsiniz.
-Seçtiğiniz embedding metodunu sebepleriyle birlikte açıklayınız.
-b) Oluşturulan embeddinglerin kalitesini anlayabilmek i çin en az 1 metrik belirleyip
-node embedding adımını optimize etmeye çalışınız. (Bunun için veriden benzer
-olmasını ve olmamasını beklediğiniz ilanlar ile bir test kümesi oluşturabilirsiniz)
-Part 3 - İlan Bilgileri ile İlan Vektörü Üretme
-a) Verilen ilan bilgilerini (başlık, açıklama) kullanarak her ilan için vektör oluşturmanızı
-bekliyoruz. Bunun için, önce gerekli temizleme işlemlerini yapmanızı daha sonra bir
-pre-trained model kullanarak vektörler oluşturulmalı. Kullandığınız yöntem ve
-modelleri seçme sebebinizi açıklamanızı bekliyoruz.
-Part 4 - Öneri Sistemi
-a) Bu adımda öneri sistemi geliştirmenizi istiyoruz. Bunun için 2 ilan vektörünü ((Part 2
-ve Part 3) de kullanan bir sistem kurmanız gerekmektedir. Uyguladığınız sistemi
-sebepleriyle birlikte açıklayınız.
-b) Ürettiğiniz ilan vektörlerini bir vector database ’e kaydetmeniz i bekliyoruz
-(istediğiniz bir vector database seçebilirsiniz).
-c) Son olarak, input olarak ilan id’si alıp, en yakın N tane ilan önerisi yapan bir
-fonksiyon yazmanızı bekliyoruz. Bu fonksiyon vector database’e bağlanıp önerileri
-getirebilir olmalı.
+Welcome!
+Problem Overview
+Design and implement a machine learning platform that efficiently manages GPU
+resources for a team of data scientists and ML engineers.
+The Challenge
+Your team needs infrastructure that supports two distinct workflows:
+**Interactive Development**: Data scientists experiment with models using small
+datasets and minimal GPU resources
+**Production Training**: Once experiments are validated, the same code should scale
+to large datasets and full GPU clusters
+The system must maximize GPU utilization while providing seamless transitions
+between development and production environments.
+Core Requirements
+Build a solution that demonstrates:
+**Interactive Environment**: Enable GPU-based model development and testing
+**Job Scheduling**: Queue and execute large training jobs based on resource
+availability
+**Resource Management**: Efficiently allocate GPUs across different workload types
+**Scalability**: Same codebase works for both small experiments and large
+production runs
+**Data Access**: Connect to multiple data sources within your pipeline
+Implementation Task
+Create a working fine-tuning pipeline using any pre-trained model of your choice.
+Your implementation should show both interactive development and production
+deployment scenarios.
+What We're Looking For
+**Technical Implementation (40%)**
+Clean, well-structured code
+Scalable architecture design
+Proper error handling and monitoring
+**Problem-Solving Approach (30%)**
+How well you address the stated requirements
+Creative solutions to resource management challenges
+Understanding of distributed systems concepts
+**Technology Choices (20%)**
+Justified selection of tools and platforms
+Clear understanding of trade-offs
+Cost-effective resource utilization
+**Communication (10%)**
+Clear documentation and setup instructions
+Ability to explain technical decisions
+Deliverables
+**1. Working Code**
+Complete pipeline implementation
+Interactive development environment
+Production job scheduling examples
+Configuration and deployment scripts
+**2. Documentation**
+Architecture overview (1-2 pages)
+Setup and deployment instructions
+Technology selection rationale
+Demo scenarios with results
+**3. Repository Structure**
+```
+├── README.md
+├── src/ # Source code
+├── config/ # Configuration files
+├── examples/ # Usage examples
+└── docs/ # Additional documentation
+```
+Submission
+Submit a GitHub repository link containing your complete solution. Include a brief cost
+analysis if using cloud resources.
+Optional: 5-minute demo video of your working system.
+Key Questions to Address
+How do you prioritize jobs when resources are limited?
+What happens when jobs fail or resources become unavailable?
+How would your solution scale to 100+ concurrent users?
+What monitoring and observability do you include?
+Legal Notice
+We acknowledge that any work and analysis to be produced during the implementation of
+this recruitment task shall be deemed as confidential information and we undertake not to
+disclose, share and expose any information or work that obtained from the recruitment task, to
+third parties, without your consent. This document and attachments are confidential, legally
+privileged and intended solely for the addressee. Access to this document by anyone else is
+unauthorized. If you are not the intended recipient, any disclosure, copying, distribution or any
+action taken or omitted to be taken in reliance on it, is prohibited and may be unlawful.
+Dream, measure, build, repeat
+Codeway
