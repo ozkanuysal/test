@@ -1,0 +1,74 @@
+
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gpu-feature-discovery-config
+  namespace: gpu-operator
+data:
+  gfd.conf: |
+    version: v1
+    sharing:
+      timeSlicing:
+        resources:
+        - name: nvidia.com/gpu
+          replicas: 2  # Allow 2 containers to share each GPU
+---
+# RuntimeClass for GPU workloads
+apiVersion: node.k8s.io/v1
+kind: RuntimeClass
+metadata:
+  name: nvidia-gpu
+handler: nvidia
+---
+# PodDisruptionBudget for GPU workers
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: ml-worker-pdb
+  namespace: ml-platform
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: ml-worker
+---
+# NetworkPolicy for GPU workers
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: ml-worker-netpol
+  namespace: ml-platform
+spec:
+  podSelector:
+    matchLabels:
+      app: ml-worker
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: ml-platform
+    ports:
+    - protocol: TCP
+      port: 8000
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: ml-platform
+  - to:
+    - namespaceSelector: {}
+    ports:
+    - protocol: TCP
+      port: 6379  # Redis
+  - to:
+    - namespaceSelector: {}
+    ports:
+    - protocol: TCP
+      port: 443  # HTTPS for model downloads
+    - protocol: TCP
+      port: 80   # HTTP

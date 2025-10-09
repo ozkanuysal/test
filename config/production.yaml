@@ -1,0 +1,59 @@
+# Production Environment Configuration
+
+environment: production
+debug: false
+
+# Resource Management - Full resources
+resource:
+  max_gpus_per_job: 8
+  development_pool_size: 2
+  production_pool_size: 16
+  gpu_memory_fraction: 0.95
+  enable_mixed_precision: true
+
+# Job Scheduler
+scheduler:
+  redis_host: redis-cluster.prod.internal
+  redis_port: 6379
+  redis_db: 0
+  max_retries: 3
+  retry_backoff_base: 2
+  job_timeout: 172800  # 48 hours
+  queue_name: prod_ml_jobs
+  worker_concurrency: 8
+  priority_levels: 3
+
+# Training Configuration - Production settings
+training:
+  model_name: bert-base-uncased
+  max_seq_length: 512
+  batch_size: 64
+  learning_rate: 1.0e-5
+  num_epochs: 5
+  warmup_steps: 1000
+  weight_decay: 0.01
+  gradient_accumulation_steps: 4
+  checkpoint_interval: 5000
+  eval_steps: 1000
+  logging_steps: 500
+  save_total_limit: 5
+
+# Monitoring
+monitoring:
+  prometheus_port: 9090
+  log_level: INFO
+  enable_tensorboard: true
+  enable_wandb: true
+  wandb_project: ml-platform-prod
+  metrics_collection_interval: 60
+
+# Data Loading
+data:
+  data_dir: /mnt/data
+  cache_dir: /mnt/cache
+  use_s3: true
+  s3_bucket: ml-platform-data-prod
+  use_gcs: false
+  gcs_bucket: null
+  num_workers: 8
+  prefetch_factor: 4

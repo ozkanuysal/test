@@ -1,0 +1,171 @@
+version: '3.8'
+
+services:
+  # Redis - Message broker for Celery
+  redis:
+    image: redis:7-alpine
+    container_name: ml-platform-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - ml-platform-network
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+
+  # Celery Worker - Processes training jobs
+  worker:
+    build: .
+    container_name: ml-platform-worker
+    command: celery -A src.scheduler.job_queue worker --loglevel=info --concurrency=2
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ./src:/app/src
+      - ./config:/app/config
+      - ./data:/app/data
+      - ./output:/app/output
+      - ./logs:/app/logs
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - ml-platform-network
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
+
+  # Job Submitter - Runs demo automatically on startup, then keeps container alive
+  submitter:
+    build: .
+    container_name: ml-platform-submitter
+    command: >
+      sh -c "
+        echo '🚀 ML Platform Starting...' &&
+        echo 'Waiting for worker to be ready...' &&
+        sleep 10 &&
+        echo '' &&
+        echo '========================================' &&
+        echo '📊 Running Comprehensive Demo' &&
+        echo '========================================' &&
+        echo '' &&
+        python3 /app/demo_comprehensive.py 2>&1 || echo 'Demo completed with errors' &&
+        echo '' &&
+        echo '========================================' &&
+        echo '✅ Demo finished - Container staying alive' &&
+        echo '========================================' &&
+        sleep infinity
+      "
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - PYTHONUNBUFFERED=1
+      - TERM=xterm-256color
+    volumes:
+      - ./src:/app/src
+      - ./config:/app/config
+      - ./examples:/app/examples
+      - ./demo_comprehensive.py:/app/demo_comprehensive.py
+      - ./demo_key_questions.py:/app/demo_key_questions.py
+      - ./demo_submit_job.py:/app/demo_submit_job.py
+      - ./data:/app/data
+      - ./output:/app/output
+      - ./logs:/app/logs
+    depends_on:
+      redis:
+        condition: service_healthy
+      worker:
+        condition: service_started
+    networks:
+      - ml-platform-network
+    stdin_open: true
+    tty: true
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 2G
+
+  # Demo Runner - Runs comprehensive demo automatically on startup
+  demo:
+    build: .
+    container_name: ml-platform-demo
+    command: >
+      sh -c "
+        echo 'Waiting for worker to be ready...' &&
+        sleep 10 &&
+        python3 /app/demo_comprehensive.py
+      "
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - PYTHONUNBUFFERED=1
+      - TERM=xterm-256color
+    volumes:
+      - ./src:/app/src
+      - ./demo_comprehensive.py:/app/demo_comprehensive.py
+      - ./data:/app/data
+      - ./output:/app/output
+      - ./logs:/app/logs
+    depends_on:
+      redis:
+        condition: service_healthy
+      worker:
+        condition: service_started
+    networks:
+      - ml-platform-network
+    profiles:
+      - demo
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 2G
+
+  # Prometheus - Metrics monitoring (optional)
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: ml-platform-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    networks:
+      - ml-platform-network
+    profiles:
+      - monitoring
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 1G
+
+volumes:
+  redis_data:
+    driver: local
+  prometheus_data:
+    driver: local
+
+networks:
+  ml-platform-network:
+    driver: bridge

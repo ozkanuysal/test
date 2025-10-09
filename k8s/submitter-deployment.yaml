@@ -1,0 +1,132 @@
+
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ml-submitter
+  namespace: ml-platform
+  labels:
+    app: ml-submitter
+    component: api
+spec:
+  replicas: 2  # High availability
+  selector:
+    matchLabels:
+      app: ml-submitter
+  template:
+    metadata:
+      labels:
+        app: ml-submitter
+        component: api
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8000"
+        prometheus.io/path: "/metrics"
+    spec:
+      containers:
+      - name: submitter
+        image: ml-platform-submitter:latest
+        imagePullPolicy: Always
+
+        ports:
+        - containerPort: 8000
+          name: http
+          protocol: TCP
+
+        env:
+        - name: REDIS_HOST
+          value: redis
+        - name: REDIS_PORT
+          value: "6379"
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: ml-platform-secrets
+              key: redis-password
+        - name: PYTHONUNBUFFERED
+          value: "1"
+
+        # Resource requests/limits (CPU-only, no GPU)
+        resources:
+          requests:
+            cpu: 500m
+            memory: 1Gi
+          limits:
+            cpu: 2
+            memory: 4Gi
+
+        # Liveness Probe: Is the container alive?
+        # - Checks HTTP endpoint every 10s
+        # - Restarts container after 3 consecutive failures
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+
+        # Readiness Probe: Can the container accept traffic?
+        # - Checks if Redis connection is healthy
+        # - Removes from service load balancing if unhealthy
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8000
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 2
+          successThreshold: 1
+          failureThreshold: 3
+
+        # Startup Probe: Initial startup check
+        # - More lenient timeout for slow startup
+        # - Useful for applications with long initialization
+        startupProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 0
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 12  # 60 seconds max startup time
+
+        volumeMounts:
+        - name: config
+          mountPath: /app/config
+          readOnly: true
+
+      volumes:
+      - name: config
+        configMap:
+          name: ml-platform-config
+
+      # Security context
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+
+      # Graceful shutdown
+      terminationGracePeriodSeconds: 30
+
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: ml-submitter
+  namespace: ml-platform
+  labels:
+    app: ml-submitter
+    component: api
+spec:
+  type: ClusterIP
+  ports:
+  - port: 8000
+    targetPort: 8000
+    protocol: TCP
+    name: http
+  selector:
+    app: ml-submitter
+  sessionAffinity: None

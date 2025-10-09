@@ -1,0 +1,7 @@
+{
+  "epoch": 5,
+  "step": 5000,
+  "metrics": {
+    "eval_loss": 0.189
+  }
+}

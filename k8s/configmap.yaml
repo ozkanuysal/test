@@ -1,0 +1,48 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ml-platform-config
+  namespace: ml-platform
+data:
+  # Redis configuration
+  REDIS_HOST: "redis"
+  REDIS_PORT: "6379"
+  REDIS_DB: "0"
+
+  # Celery configuration
+  CELERY_BROKER_URL: "redis://redis:6379/0"
+  CELERY_RESULT_BACKEND: "redis://redis:6379/0"
+  CELERY_TASK_SERIALIZER: "json"
+  CELERY_RESULT_SERIALIZER: "json"
+  CELERY_ACCEPT_CONTENT: "json"
+  CELERY_TIMEZONE: "UTC"
+  CELERY_ENABLE_UTC: "true"
+
+  # GPU configuration
+  GPU_ENABLED: "true"
+  GPU_MEMORY_FRACTION: "0.95"
+  CUDA_VISIBLE_DEVICES: "0,1"
+
+  # Job configuration
+  MAX_CONCURRENT_JOBS: "20"
+  JOB_TIMEOUT: "86400"  # 24 hours
+  CHECKPOINT_INTERVAL: "1000"
+
+  # Health check configuration
+  HEALTH_CHECK_INTERVAL: "60"
+  MAX_GPU_TEMPERATURE: "85"
+  MAX_GPU_MEMORY_PERCENT: "95"
+
+  # Monitoring configuration
+  PROMETHEUS_ENABLED: "true"
+  PROMETHEUS_PORT: "9090"
+  LOG_LEVEL: "INFO"
+  LOG_FORMAT: "json"
+
+  # Priority configuration
+  ENABLE_FAIR_SHARE: "true"
+  STARVATION_TIMEOUT: "3600"
+
+  # Model configuration
+  HUGGINGFACE_CACHE: "/root/.cache/huggingface"
+  MODEL_DOWNLOAD_TIMEOUT: "3600"

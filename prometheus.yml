@@ -1,0 +1,29 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: 'ml-platform'
+    environment: 'production'
+
+scrape_configs:
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Redis monitoring (if redis_exporter is added)
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis:6379']
+    metrics_path: /metrics
+
+  # Application metrics (if your services expose metrics)
+  - job_name: 'ml-worker'
+    static_configs:
+      - targets: ['worker:8000']
+    metrics_path: /metrics
+
+  # Celery metrics (if celery-prometheus-exporter is configured)
+  - job_name: 'celery'
+    static_configs:
+      - targets: ['worker:8888']

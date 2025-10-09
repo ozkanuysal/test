@@ -1,0 +1,66 @@
+
+
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: fast-ssd
+  annotations:
+    storageclass.kubernetes.io/is-default-class: "false"
+provisioner: ebs.csi.aws.com  # AWS EBS CSI driver
+parameters:
+  type: gp3                    # General Purpose SSD v3
+  iops: "16000"               # Max IOPS (adjust as needed)
+  throughput: "1000"           # MB/s throughput
+  encrypted: "true"            # Encrypt at rest
+  kmsKeyId: arn:aws:kms:us-west-2:111122223333:key/1234abcd-12ab-34cd-56ef-1234567890ab
+volumeBindingMode: WaitForFirstConsumer  # Delay binding until pod is scheduled
+allowVolumeExpansion: true                # Allow PVC resize
+reclaimPolicy: Retain                     # Keep data after PVC deletion
+
+
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: standard
+  annotations:
+    storageclass.kubernetes.io/is-default-class: "true"  # Default storage class
+provisioner: ebs.csi.aws.com
+parameters:
+  type: gp2                    # General Purpose SSD v2 (cheaper than gp3)
+  encrypted: "true"
+volumeBindingMode: WaitForFirstConsumer
+allowVolumeExpansion: true
+reclaimPolicy: Delete           # Auto-delete after PVC deletion
+
+---
+
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: shared-storage
+provisioner: efs.csi.aws.com  # AWS EFS
+parameters:
+  provisioningMode: efs-ap
+  fileSystemId: fs-1234567890abcdef0  # Replace with your EFS ID
+  directoryPerms: "700"
+  gidRangeStart: "1000"
+  gidRangeEnd: "2000"
+  basePath: "/ml-platform"
+volumeBindingMode: Immediate
+reclaimPolicy: Retain
+
+---
+# 
+
+# 
+
+apiVersion: snapshot.storage.k8s.io/v1
+kind: VolumeSnapshotClass
+metadata:
+  name: fast-snapshot
+  labels:
+    app: ml-platform
+driver: ebs.csi.aws.com  # Must match StorageClass provisioner
+deletionPolicy: Retain    # Keep snapshots after VolumeSnapshot deletion
+parameters:
+  encrypted: "true"

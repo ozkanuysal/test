@@ -1,0 +1,59 @@
+# Development Environment Configuration
+
+environment: development
+debug: true
+
+# Resource Management - Limited resources for dev
+resource:
+  max_gpus_per_job: 1
+  development_pool_size: 2
+  production_pool_size: 0
+  gpu_memory_fraction: 0.7
+  enable_mixed_precision: false
+
+# Job Scheduler
+scheduler:
+  redis_host: localhost
+  redis_port: 6379
+  redis_db: 0
+  max_retries: 1
+  retry_backoff_base: 2
+  job_timeout: 3600  # 1 hour for dev
+  queue_name: dev_ml_jobs
+  worker_concurrency: 2
+  priority_levels: 3
+
+# Training Configuration - Smaller models and batches
+training:
+  model_name: bert-base-uncased
+  max_seq_length: 64
+  batch_size: 8
+  learning_rate: 5.0e-5
+  num_epochs: 2
+  warmup_steps: 100
+  weight_decay: 0.01
+  gradient_accumulation_steps: 2
+  checkpoint_interval: 100
+  eval_steps: 50
+  logging_steps: 10
+  save_total_limit: 2
+
+# Monitoring
+monitoring:
+  prometheus_port: 9091
+  log_level: DEBUG
+  enable_tensorboard: true
+  enable_wandb: false
+  wandb_project: ml-platform-dev
+  metrics_collection_interval: 30
+
+# Data Loading
+data:
+  data_dir: ./data
+  cache_dir: ./cache
+  use_s3: false
+  s3_bucket: null
+  use_gcs: false
+  gcs_bucket: null
+  num_workers: 2
+  prefetch_factor: 2
