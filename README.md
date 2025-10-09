@@ -2,6 +2,9 @@
 
 A production-ready machine learning platform that efficiently manages GPU resources for teams of data scientists and ML engineers. Supports both interactive development and large-scale production training with seamless transitions between environments.
 
+[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
 ## 🎯 Overview
 
@@ -162,8 +165,60 @@ docker-compose --profile demo up
 - 📈 Monitoring and observability
 - 🎯 Live job submission and monitoring
 
+**Duration**: 3-5 minutes | **Output**: Colorful, formatted terminal
 
+See [DEMO_GUIDE.md](DEMO_GUIDE.md) for more options.
 
+## 📊 Key Design Decisions
+
+### 1. Job Prioritization (Answer to Key Question #1)
+
+**Algorithm**: Weighted Fair Queuing with 3 priority levels
+
+- **Priority Levels**: High (3) > Medium (2) > Low (1)
+- **Fair Share**: Tracks GPU-hours per user, prevents monopolization
+- **Starvation Prevention**: Auto-boost priority after 1-hour wait
+- **User Quotas**: Configurable max concurrent GPUs and jobs per user
+
+```python
+# Priority queue sorts by:
+# 1. Priority level (higher first)
+# 2. Submission time (earlier first)
+# 3. Fair share (users with less usage prioritized)
+```
+
+### 2. Failure Handling (Answer to Key Question #2)
+
+**Multi-Layer Fault Tolerance**:
+
+1. **Automatic Retry**: Up to 3 retries with exponential backoff
+2. **Checkpointing**: Save model state every N steps, resume on failure
+3. **Health Monitoring**: Detect unhealthy GPUs, migrate jobs to healthy nodes
+4. **Graceful Degradation**: Release resources, requeue jobs on worker failures
+
+```python
+# Example failure scenario:
+# GPU overheats → Health checker detects → Job checkpointed →
+# GPU released → Job requeued → Allocated to healthy GPU → Resume from checkpoint
+```
+
+### 3. Scaling to 100+ Users (Answer to Key Question #3)
+
+**Horizontal Scaling Architecture**:
+
+- **Multiple Worker Nodes**: 10-20 nodes, each with 8 GPUs (80-160 GPUs total)
+- **Redis Cluster**: Distributed queue for high throughput (100K+ jobs/sec)
+- **Ray Integration**: Multi-node distributed training
+- **Per-User Quotas**: Prevent individual users from monopolizing resources
+- **Resource Pools**: Separate dev/prod pools with different SLAs
+
+**Capacity**: 100 users × 20 GPU-hours/month = 2000 GPU-hours/month supported
+
+See [docs/scaling_strategy.md](docs/scaling_strategy.md) for details.
+
+### 4. Monitoring & Observability (Answer to Key Question #4)
+
+**Comprehensive Monitoring Stack**:
 
 | Component | Technology | Metrics |
 |-----------|-----------|---------|
@@ -246,3 +301,34 @@ See [docs/cost_analysis.md](docs/cost_analysis.md) for full breakdown.
 | Monitoring | Prometheus | Industry standard, rich ecosystem |
 | Configuration | Hydra + OmegaConf | Type-safe, hierarchical configs |
 | Data Loading | HuggingFace Datasets | Multi-source support |
+
+See [docs/technology_choices.md](docs/technology_choices.md) for rationale.
+
+## 🧪 Testing
+
+```bash
+# Run tests
+pytest tests/
+
+# Code formatting
+black src/ tests/
+
+# Type checking
+mypy src/
+```
+
+## 📄 License
+
+MIT License - see LICENSE file for details.
+
+## 🤝 Contributing
+
+Contributions welcome! Please read CONTRIBUTING.md first.
+
+## 📧 Contact
+
+For questions or support, please open an issue on GitHub.
+
+---
+
+**Built with ❤️ for efficient ML infrastructure**
