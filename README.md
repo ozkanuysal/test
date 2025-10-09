@@ -1,8 +1,5 @@
 # ML GPU Platform - GPU Resource Management System
 
-A production-ready machine learning platform that efficiently manages GPU resources for teams of data scientists and ML engineers. Supports both interactive development and large-scale production training with seamless transitions between environments.
-
-
 ## 🎯 Overview
 
 This platform addresses the challenge of efficiently managing limited GPU resources across multiple users and workloads. It provides:
@@ -163,7 +160,7 @@ docker-compose --profile demo up
 - 🎯 Live job submission and monitoring
 
 
-
+**Comprehensive Monitoring Stack**:
 
 | Component | Technology | Metrics |
 |-----------|-----------|---------|
@@ -229,10 +226,7 @@ See [docs/architecture.md](docs/architecture.md) for detailed design.
 - Development: Spot instances (p3.8xlarge, 4x V100)
 - **Total**: ~$22,246/month ($266,952/year)
 
-**On-Premise**:
-- CapEx: $380,000 (2 servers, 16x A100 total)
-- OpEx: $9,593/month ($115,116/year)
-- **Break-even**: 2.1 years
+
 
 See [docs/cost_analysis.md](docs/cost_analysis.md) for full breakdown.
 
