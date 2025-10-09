@@ -240,34 +240,3 @@ See [docs/cost_analysis.md](docs/cost_analysis.md) for full breakdown.
 | Monitoring | Prometheus | Industry standard, rich ecosystem |
 | Configuration | Hydra + OmegaConf | Type-safe, hierarchical configs |
 | Data Loading | HuggingFace Datasets | Multi-source support |
-
-See [docs/technology_choices.md](docs/technology_choices.md) for rationale.
-
-## 🧪 Testing
-
-```bash
-# Run tests
-pytest tests/
-
-# Code formatting
-black src/ tests/
-
-# Type checking
-mypy src/
-```
-
-## 📄 License
-
-MIT License - see LICENSE file for details.
-
-## 🤝 Contributing
-
-Contributions welcome! Please read CONTRIBUTING.md first.
-
-## 📧 Contact
-
-For questions or support, please open an issue on GitHub.
-
----
-
-**Built with ❤️ for efficient ML infrastructure**
