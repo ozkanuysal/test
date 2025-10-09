@@ -1,0 +1,137 @@
+
+
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: ml-platform-workers
+  namespace: ml-platform
+  labels:
+    app: ml-platform
+    component: worker
+    prometheus: kube-prometheus
+spec:
+  # Select services to monitor
+  selector:
+    matchLabels:
+      app: ml-worker
+
+  # Which namespace to look for services
+  namespaceSelector:
+    matchNames:
+    - ml-platform
+
+  # Endpoint configuration
+  endpoints:
+  - port: http
+    path: /metrics
+    interval: 30s      # Scrape every 30 seconds
+    scrapeTimeout: 10s # Timeout after 10 seconds
+
+
+    relabelings:
+    - sourceLabels: [__meta_kubernetes_pod_name]
+      targetLabel: pod
+    - sourceLabels: [__meta_kubernetes_pod_node_name]
+      targetLabel: node
+
+---
+
+
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: ml-platform-submitter
+  namespace: ml-platform
+  labels:
+    app: ml-platform
+    component: api
+    prometheus: kube-prometheus
+spec:
+  selector:
+    matchLabels:
+      app: ml-submitter
+
+  namespaceSelector:
+    matchNames:
+    - ml-platform
+
+  endpoints:
+  - port: http
+    path: /metrics
+    interval: 30s
+    scrapeTimeout: 10s
+
+    relabelings:
+    - sourceLabels: [__meta_kubernetes_pod_name]
+      targetLabel: pod
+
+---
+
+
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: ml-platform-alerts
+  namespace: ml-platform
+  labels:
+    app: ml-platform
+    prometheus: kube-prometheus
+spec:
+  groups:
+  - name: ml-platform
+    interval: 30s
+    rules:
+
+    # Alert: GPU temperature too high
+    - alert: GPUTemperatureHigh
+      expr: ml_platform_gpu_temperature_celsius > 80
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: "GPU temperature high on {{ $labels.pod }}"
+        description: "GPU temperature is {{ $value }}°C (threshold: 80°C)"
+
+    # Alert: GPU memory exhausted
+    - alert: GPUMemoryExhausted
+      expr: (ml_platform_gpu_memory_used_bytes / ml_platform_gpu_memory_total_bytes) > 0.95
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: "GPU memory exhausted on {{ $labels.pod }}"
+        description: "GPU memory usage is {{ $value | humanizePercentage }}"
+
+    # Alert: Queue depth growing
+    - alert: QueueDepthHigh
+      expr: ml_platform_queue_depth > 100
+      for: 10m
+      labels:
+        severity: warning
+      annotations:
+        summary: "Job queue depth is high"
+        description: "Queue has {{ $value }} jobs waiting (threshold: 100)"
+
+    # Alert: Worker pod down
+    - alert: WorkerPodDown
+      expr: up{job="ml-worker"} == 0
+      for: 5m
+      labels:
+        severity: critical
+      annotations:
+        summary: "ML worker pod is down"
+        description: "Worker pod {{ $labels.pod }} is not responding"
+
+    # Alert: High job failure rate
+    - alert: HighJobFailureRate
+      expr: |
+        (
+          rate(ml_platform_jobs_failed_total[5m]) /
+          rate(ml_platform_jobs_submitted_total[5m])
+        ) > 0.5
+      for: 10m
+      labels:
+        severity: warning
+      annotations:
+        summary: "High job failure rate"
+        description: "{{ $value | humanizePercentage }} of jobs are failing"

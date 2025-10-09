@@ -1,0 +1,59 @@
+# ML Platform Default Configuration
+
+environment: development
+debug: false
+
+# Resource Management
+resource:
+  max_gpus_per_job: 4
+  development_pool_size: 2
+  production_pool_size: 8
+  gpu_memory_fraction: 0.9
+  enable_mixed_precision: true
+
+# Job Scheduler
+scheduler:
+  redis_host: localhost
+  redis_port: 6379
+  redis_db: 0
+  max_retries: 3
+  retry_backoff_base: 2
+  job_timeout: 86400  # 24 hours
+  queue_name: ml_jobs
+  worker_concurrency: 4
+  priority_levels: 3
+
+# Training Configuration
+training:
+  model_name: bert-base-uncased
+  max_seq_length: 128
+  batch_size: 32
+  learning_rate: 2.0e-5
+  num_epochs: 3
+  warmup_steps: 500
+  weight_decay: 0.01
+  gradient_accumulation_steps: 1
+  checkpoint_interval: 1000
+  eval_steps: 500
+  logging_steps: 100
+  save_total_limit: 3
+
+# Monitoring
+monitoring:
+  prometheus_port: 9090
+  log_level: INFO
+  enable_tensorboard: true
+  enable_wandb: false
+  wandb_project: ml-platform
+  metrics_collection_interval: 60
+
+# Data Loading
+data:
+  data_dir: ./data
+  cache_dir: ./cache
+  use_s3: false
+  s3_bucket: null
+  use_gcs: false
+  gcs_bucket: null
+  num_workers: 4
+  prefetch_factor: 2

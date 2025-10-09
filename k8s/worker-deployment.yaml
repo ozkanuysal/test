@@ -1,0 +1,152 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ml-worker
+  namespace: ml-platform
+  labels:
+    app: ml-worker
+    component: compute
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: ml-worker
+  template:
+    metadata:
+      labels:
+        app: ml-worker
+        component: compute
+    spec:
+      # Schedule on GPU nodes only
+      nodeSelector:
+        accelerator: nvidia-gpu
+
+      # Tolerate GPU taints
+      tolerations:
+      - key: nvidia.com/gpu
+        operator: Exists
+        effect: NoSchedule
+
+      containers:
+      - name: worker
+        image: ml-platform-worker:latest
+        imagePullPolicy: Always
+
+        command:
+        - celery
+        - -A
+        - src.scheduler.celery_app
+        - worker
+        - --loglevel=info
+        - --concurrency=2
+        - --max-tasks-per-child=10
+
+        env:
+        - name: REDIS_HOST
+          value: redis
+        - name: REDIS_PORT
+          value: "6379"
+        - name: CELERY_BROKER_URL
+          value: redis://redis:6379/0
+        - name: CELERY_RESULT_BACKEND
+          value: redis://redis:6379/0
+        - name: GPU_ENABLED
+          value: "true"
+        - name: PYTHONUNBUFFERED
+          value: "1"
+
+        resources:
+          requests:
+            cpu: 4
+            memory: 16Gi
+            nvidia.com/gpu: 2
+          limits:
+            cpu: 8
+            memory: 32Gi
+            nvidia.com/gpu: 2
+
+        # Health checks
+        livenessProbe:
+          exec:
+            command:
+            - celery
+            - -A
+            - src.scheduler.celery_app
+            - inspect
+            - ping
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 3
+
+        readinessProbe:
+          exec:
+            command:
+            - celery
+            - -A
+            - src.scheduler.celery_app
+            - inspect
+            - ping
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          successThreshold: 1
+          failureThreshold: 3
+
+        volumeMounts:
+        - name: model-cache
+          mountPath: /root/.cache/huggingface
+        - name: data
+          mountPath: /app/data
+        - name: checkpoints
+          mountPath: /app/checkpoints
+
+      volumes:
+      - name: model-cache
+        persistentVolumeClaim:
+          claimName: model-cache-pvc
+      - name: data
+        persistentVolumeClaim:
+          claimName: data-pvc
+      - name: checkpoints
+        persistentVolumeClaim:
+          claimName: checkpoints-pvc
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: model-cache-pvc
+  namespace: ml-platform
+spec:
+  accessModes:
+  - ReadWriteMany
+  resources:
+    requests:
+      storage: 100Gi
+  storageClassName: fast-ssd
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: data-pvc
+  namespace: ml-platform
+spec:
+  accessModes:
+  - ReadWriteMany
+  resources:
+    requests:
+      storage: 200Gi
+  storageClassName: fast-ssd
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: checkpoints-pvc
+  namespace: ml-platform
+spec:
+  accessModes:
+  - ReadWriteMany
+  resources:
+    requests:
+      storage: 500Gi
+  storageClassName: fast-ssd

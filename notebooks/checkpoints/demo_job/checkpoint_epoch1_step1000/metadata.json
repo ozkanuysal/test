@@ -1,0 +1,10 @@
+{
+  "epoch": 1,
+  "step": 1000,
+  "metrics": {
+    "eval_loss": 0.189,
+    "eval_accuracy": 0.92
+  },
+  "train_loss": 0.234,
+  "best_metric": 0.189
+}
